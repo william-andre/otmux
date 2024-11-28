@@ -13,4 +13,4 @@ window = get_or_create_window(session, SESSION_NAME)
 main_pane = window.panes[0]
 def init_server_pane(pane: libtmux.Pane):
     main_pane.resize(height=5)
-server_pane = get_or_create_pane(window, 'server', ODOO_ROOT, init_server_pane)
+server_pane = get_or_create_pane(window, ODOO_ROOT, 'server', init_server_pane)

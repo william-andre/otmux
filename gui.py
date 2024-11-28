@@ -43,6 +43,12 @@ def serve():
                 if re.match(document.text.replace('%', '.*'), base):
                     yield Completion(base, -len(base))
 
+    class RepoCompleter(Completer):
+        def get_completions(self, document, complete_event):
+            for repo_name in STORE.repositories:
+                if repo_name.startswith(document.text):
+                    yield Completion(repo_name, -len(repo_name))
+
     def accept(buff: Buffer):
         vars = grammar.match(buff.text)
         if not vars:
@@ -79,6 +85,7 @@ def serve():
             'force': WordCompleter(['--force']),
             'target': BranchCompleter(),
             'database': DatabaseCompleter(),
+            'repo': RepoCompleter(),
         }),
         lexer=GrammarLexer(
             grammar,

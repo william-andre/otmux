@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Callable
 
 import git
 import libtmux
@@ -14,16 +15,12 @@ class OdooRepo:
     git_repo: git.Repo = dataclasses.field(init=False)
     tmux_pane: libtmux.Pane = dataclasses.field(init=False)
     addons_folder: str | None = None
+    show: bool = True
 
     def __post_init__(self):
         from tmux import window
-        def callback(pane):
-            for repo in STORE.repositories.values():
-                repo.tmux_pane.resize(width=int(window.width)//(len(STORE.repositories) + 1))
-
         self.git_repo = git.Repo(self.path)
-        self.tmux_pane = get_or_create_pane(window, self.name, self.path, callback)
-
+        self.tmux_pane = get_or_create_pane(window, self.path, self.name, hide=not self.show)
         STORE.repositories[self.name] = self
 
 
@@ -48,7 +45,7 @@ class Remote:
 @dataclasses.dataclass
 class Command:
     name: str
-    callback: callable
+    callback: Callable
     help: str
     pattern: str
 

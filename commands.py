@@ -1,20 +1,21 @@
 import requests
+from typing import Callable
 
 from prompt_toolkit.contrib.regular_languages.compiler import Variables
 
 
 from exceptions import AbortCommand
-from tools import get_branch, get_dirty_repo, check_branch_compatibility
+from tools import get_branch, get_dirty_repo, check_branch_compatibility, get_or_create_pane
 from models import STORE, Command
 from tmux import server_pane
 
 
 def command(pattern):
-    def wrapper(func: callable):
+    def wrapper(func: Callable):
         Command(
             name=func.__name__,
             callback=func,
-            help=func.__doc__,
+            help=func.__doc__ or "",
             pattern=pattern
         )
         return func
@@ -56,7 +57,7 @@ def switch(vars: Variables):
     if dirty_repos := get_dirty_repo(STORE.repositories):
         raise AbortCommand('Dirty repos: ' + ', '.join(dirty_repos))
     force = vars.get("force")
-    is_pr = vars.get("target", "").isdigit()
+    is_pr = (vars.get("target") or "").isdigit()
     response = requests.get(f'https://runbot.odoo.com/api/branch?name={vars.get("target")}')
     if not response.json():
         raise AbortCommand('Branch not found')
@@ -158,3 +159,23 @@ def backup(args: Variables):
 @command(r"(?P<command>restore)")
 def restore(args: Variables):
     """Restore the database to the backup."""
+
+
+@command(r"(?P<command>show) \s+ (?P<repo>\S+)")
+def show(args: Variables):
+    """Show the pane."""
+    pane_name = args.get("repo")
+    if pane_name not in STORE.repositories:
+        raise AbortCommand(f'Invalid pane name: {pane_name}')
+    repo = STORE.repositories[pane_name]
+    get_or_create_pane(server_pane.window, repo.path, show=True)
+
+
+@command(r"(?P<command>hide) \s+ (?P<repo>\S+)")
+def hide(args: Variables):
+    """Hide the pane."""
+    pane_name = args.get("repo")
+    if pane_name not in STORE.repositories:
+        raise AbortCommand(f'Invalid pane name: {pane_name}')
+    repo = STORE.repositories[pane_name]
+    get_or_create_pane(server_pane.window, repo.path, hide=True)

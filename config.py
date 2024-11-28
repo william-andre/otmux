@@ -22,21 +22,25 @@ OdooRepo(
     name='upgrade-util',
     versionned=False,
     path=ODOO_ROOT + '/upgrade-util',
+    show=False,
 )
 OdooRepo(
     name='documentation',
     path=ODOO_ROOT + '/documentation',
+    show=False,
 )
 OdooRepo(
     name='design-themes',
     path=ODOO_ROOT + '/design-themes',
     addons_folder='',
+    show=False,
 )
 OdooRepo(
     name='debug',
     path=ODOO_ROOT + '/debug',
     versionned=False,
     addons_folder='',
+    show=False,
 )
 
 OdooBase('master', ODOO_ROOT + '/.env3.11')

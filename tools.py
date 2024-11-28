@@ -18,15 +18,38 @@ def get_or_create_window(session: libtmux.Session, window_name: str):
     return window
 
 
-def get_or_create_pane(window: libtmux.Window, pane_name: str, directory: str, create_callback=None):
-    if not (pane := window.panes.get(pane_current_path=directory, default=False)):
+def get_or_create_pane(
+        window: libtmux.Window,
+        directory: str,
+        pane_name: str | None = None,
+        create_callback=None,
+        hide=False,
+        show=False,
+    ):
+    def resize():
+        from models import STORE
+        nb_visible = len([repo for repo in STORE.repositories.values() if repo.tmux_pane in window.panes])
+        for repo in STORE.repositories.values():
+            repo.tmux_pane.resize(width=int(window.width)//nb_visible)
+
+    if not (pane := window.session.panes.get(pane_current_path=directory, default=False)):
+        # resize()
         direction = libtmux.constants.PaneDirection.Right
         if len(window.panes) <= 2:
             direction = libtmux.constants.PaneDirection.Below
         pane = window.panes[-1].split(attach=True, start_directory=directory, direction=direction)
-        pane.cmd('select-pane', '-T', pane_name)
+        if pane_name:
+            pane.cmd('select-pane', '-T', pane_name)
         if create_callback:
             create_callback(pane)
+
+    identifier = f"odoo-dev:{pane.window_index}.{pane.index}"
+    if hide:
+        window.session.cmd('break-pane', '-dPs', identifier)
+        resize()
+    if show:
+        window.panes[-1].cmd('join-pane', '-hs', identifier)
+        resize()
     return pane
 
 
