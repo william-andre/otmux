@@ -1,0 +1,2 @@
+class AbortCommand(Exception):
+    pass
